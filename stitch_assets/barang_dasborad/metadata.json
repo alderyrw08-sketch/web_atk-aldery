@@ -1,0 +1,23 @@
+{
+  "project": {
+    "title": "Enterprise Inventory Login Page",
+    "id": "1586277848545824590",
+    "resourceName": "projects/1586277848545824590"
+  },
+  "screen": {
+    "title": "Daftar Barang - Sistem Manajemen Persediaan Barang dan ATK",
+    "screenKey": "barang dasborad",
+    "id": "773af4d0424741d99ec18fd2f23f2fa0",
+    "resourceName": "projects/1586277848545824590/screens/773af4d0424741d99ec18fd2f23f2fa0",
+    "deviceType": "DESKTOP",
+    "width": 2560,
+    "height": 2056,
+    "screenshotUrl": "https://lh3.googleusercontent.com/aida/AEtjO1VI9TTAuiTcaykZ-kMBES_7RS90Zg20UP7itkRKzeFFvTnA0kG2Yy7cOIGaDvUePHqQ_TJJHV6O-keG4JktfRVs3kO-jRp4XoyLdh3-mfjQi8IPIV56RsPQV8HK1Yugfjqx7GvdTys7FEgjgnym6pjwIafwnAEJnoTpTT499xQW1FWwufSzw2OA5kRICC6fIU_T1zExXPyyNZGTPEIZ4SerQsYYme6LRDunT6I2tGzjFLj0ofoneQIvxQ",
+    "htmlDownloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzAwMDY1ZTdhODI0YmZlZDkwNTIyYTI5OTc1MDkwZGFlEgsSBxD74e_R9wcYAZIBIwoKcHJvamVjdF9pZBIVQhMxNTg2Mjc3ODQ4NTQ1ODI0NTkw&filename=&opi=89354086",
+    "localFiles": {
+      "html": "d:/atk_web/stitch_assets/barang_dasborad/barang_dasborad.html",
+      "screenshot": "d:/atk_web/stitch_assets/barang_dasborad/barang_dasborad.jpg"
+    }
+  }
+}
+
