@@ -1,0 +1,82 @@
+services:
+  app:
+    image: atk-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        UID: ${WWWUSER:-1000}
+        GID: ${WWWGROUP:-1000}
+    container_name: atk_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "${VITE_PORT:-5173}:5173"
+    environment:
+      APP_ENV: ${APP_ENV:-local}
+      APP_DEBUG: ${APP_DEBUG:-true}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - atk_net
+
+  nginx:
+    image: nginx:alpine
+    container_name: atk_nginx
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:80"
+    volumes:
+      - .:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - atk_net
+
+  db:
+    image: mysql:8.0
+    container_name: atk_db
+    restart: unless-stopped
+    ports:
+      - "${FORWARD_DB_PORT:-3306}:3306"
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-atk_aldery}
+      MYSQL_USER: ${DB_USERNAME:-atk_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root}
+    volumes:
+      - atk_db_data:/var/lib/mysql
+    networks:
+      - atk_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-p${DB_ROOT_PASSWORD:-root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: atk_phpmyadmin
+    restart: unless-stopped
+    ports:
+      - "${FORWARD_PMA_PORT:-8081}:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - atk_net
+
+volumes:
+  atk_db_data:
+    driver: local
+
+networks:
+  atk_net:
+    driver: bridge

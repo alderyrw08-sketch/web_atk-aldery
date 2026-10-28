@@ -4,108 +4,233 @@
 @section('page-title', 'Master Data Barang')
 
 @section('content')
-<div class="inventory-page">
-    <div class="inv-page-head">
-        <div class="inv-heading">
-            <div class="inv-breadcrumb"><span>Master Data</span><span class="inv-breadcrumb-dot"></span><span class="inv-breadcrumb-current">Barang</span></div>
-            <h1 class="inv-title">Edit Barang</h1>
-            <p class="inv-subtitle">Perbarui informasi master barang {{ $barang->code }}</p>
+<div class="p-4 sm:p-8 min-h-[calc(100vh-72px)] bg-surface flex flex-col justify-between">
+    <div class="max-w-4xl mx-auto w-full">
+
+        {{-- MODE TAMPILAN BAR --}}
+        <div class="bg-surface-container-lowest border border-[#BAE6FD]/60 rounded-2xl px-5 py-3 mb-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3.5">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-[#E0F2FE] border border-[#BAE6FD] flex items-center justify-center shrink-0 text-[#0284C7]">
+                    <span class="material-symbols-outlined text-[20px]">folder</span>
+                </div>
+                <div>
+                    <h4 class="font-bold text-[13px] text-on-surface leading-tight">Mode Tampilan</h4>
+                </div>
+            </div>
+            <div class="inline-flex items-center p-1 rounded-full bg-surface-container-low border border-outline-variant/30 shrink-0 gap-1">
+                @can('barang.create')
+                    <a href="{{ route('barangs.create') }}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-on-surface-variant hover:text-primary transition-colors text-[12px] font-medium">
+                        <span class="material-symbols-outlined text-[16px]">add</span>
+                        <span>Tambah Barang</span>
+                    </a>
+                @endcan
+                <span class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-primary-container text-white text-[12px] font-bold shadow-sm shadow-primary-container/20">
+                    <span class="material-symbols-outlined text-[16px]">edit</span>
+                    <span>Edit Barang</span>
+                </span>
+                <a href="{{ route('barangs.show', $barang) }}" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-on-surface-variant hover:text-primary transition-colors text-[12px] font-medium">
+                    <span class="material-symbols-outlined text-[16px]">visibility</span>
+                    <span>Detail Barang</span>
+                </a>
+            </div>
         </div>
-        <a href="{{ route('barangs.index') }}" class="inv-button"><span class="material-symbols-outlined">arrow_back</span>Kembali ke Daftar</a>
-    </div>
 
-    <div class="inv-modebar">
-        <div class="inv-modebar-title"><span class="material-symbols-outlined">folder</span>Mode Tampilan</div>
-        <nav class="inv-mode-tabs" aria-label="Navigasi master barang">
-            <a href="{{ route('barangs.create') }}"><span class="material-symbols-outlined">add</span>Tambah Barang</a>
-            <a href="{{ route('barangs.edit', $barang) }}" class="active" aria-current="page"><span class="material-symbols-outlined">edit</span>Edit Barang</a>
-            <a href="{{ route('barangs.show', $barang) }}"><span class="material-symbols-outlined">visibility</span>Detail Barang</a>
-        </nav>
-    </div>
-
-    @if ($errors->any())
-        <div class="inv-alert error" role="alert"><span class="material-symbols-outlined">error</span><ul class="mb-0 ps-3">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>
-    @endif
-
-    <form action="{{ route('barangs.update', $barang->id) }}" method="POST">
-        @csrf
-        @method('PUT')
-        <div class="inv-layout">
-            <section class="inv-card">
-                <div class="inv-card-accent"></div>
-                <div class="inv-card-heading">
-                    <span class="material-symbols-outlined">edit_note</span>
-                    <div><h2>Informasi Master Barang</h2><p class="inv-subtitle">Kode dan nama harus unik serta mudah dikenali</p></div>
-                    <span class="inv-badge {{ $barang->status ? '' : 'cancelled' }} ms-auto">{{ $barang->status ? 'Aktif' : 'Nonaktif' }}</span>
-                </div>
-
-                <div class="inv-form-grid">
-                    <div class="inv-field">
-                        <label for="code">Kode Barang <span class="text-danger">*</span></label>
-                        <input id="code" type="text" name="code" value="{{ old('code', $barang->code) }}" class="@error('code') is-invalid @enderror" required>
-                        @error('code')<span class="inv-error">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="inv-field">
-                        <label for="name">Nama Barang <span class="text-danger">*</span></label>
-                        <input id="name" type="text" name="name" value="{{ old('name', $barang->name) }}" class="@error('name') is-invalid @enderror" required>
-                        @error('name')<span class="inv-error">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="inv-field">
-                        <label for="category_id">Kategori <span class="text-danger">*</span></label>
-                        <select id="category_id" name="category_id" class="@error('category_id') is-invalid @enderror" required>
-                            <option value="">Pilih kategori</option>
-                            @foreach ($categories as $category)
-                                <option value="{{ $category->id }}" {{ old('category_id', $barang->category_id) == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('category_id')<span class="inv-error">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="inv-field">
-                        <label for="unit_id">Satuan <span class="text-danger">*</span></label>
-                        <select id="unit_id" name="unit_id" class="@error('unit_id') is-invalid @enderror" required>
-                            <option value="">Pilih satuan</option>
-                            @foreach ($units as $unit)
-                                <option value="{{ $unit->id }}" {{ old('unit_id', $barang->unit_id) == $unit->id ? 'selected' : '' }}>{{ $unit->name }}</option>
-                            @endforeach
-                        </select>
-                        @error('unit_id')<span class="inv-error">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="inv-field full">
-                        <label for="stock">Stok Saat Ini</label>
-                        <input id="stock" type="text" value="{{ number_format($barang->stock) }} {{ $barang->unit->name ?? '' }}" disabled>
-                        <span class="text-muted small">Stok hanya berubah melalui Barang Masuk, Barang Keluar, atau Stock Opname.</span>
-                    </div>
-                    <div class="inv-field">
-                        <label for="minimum_stock">Stok Minimum <span class="text-danger">*</span></label>
-                        <input id="minimum_stock" type="number" min="0" name="minimum_stock" value="{{ old('minimum_stock', $barang->minimum_stock) }}" class="@error('minimum_stock') is-invalid @enderror" required>
-                        @error('minimum_stock')<span class="inv-error">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="inv-field">
-                        <label for="location">Lokasi</label>
-                        <input id="location" type="text" name="location" value="{{ old('location', $barang->location) }}" placeholder="Contoh: Gudang A, Rak 1">
-                        @error('location')<span class="inv-error">{{ $message }}</span>@enderror
-                    </div>
-                    <div class="inv-field full">
-                        <label for="description">Deskripsi</label>
-                        <textarea id="description" name="description" rows="4" placeholder="Spesifikasi atau keterangan barang...">{{ old('description', $barang->description) }}</textarea>
-                        @error('description')<span class="inv-error">{{ $message }}</span>@enderror
-                    </div>
-                </div>
-
-                <div class="inv-table-actions">
-                    <a href="{{ route('barangs.index') }}" class="inv-button inv-button-outline">Batal</a>
-                    <button type="submit" class="inv-button inv-button-primary"><span class="material-symbols-outlined">check</span>Simpan Perubahan</button>
-                </div>
-            </section>
-
-            <aside class="inv-summary">
-                <h2><span class="material-symbols-outlined align-middle me-1">inventory_2</span>Ringkasan Stok</h2>
-                <div class="inv-summary-line"><span>Stok Saat Ini</span><strong>{{ number_format($barang->stock) }}</strong></div>
-                <div class="inv-summary-line"><span>Stok Minimum</span><strong>{{ number_format($barang->minimum_stock) }}</strong></div>
-                <div class="inv-summary-line"><span>Status</span><strong>{{ $barang->status ? 'Aktif' : 'Nonaktif' }}</strong></div>
-                <div class="inv-alert mt-3 mb-0"><span class="material-symbols-outlined">info</span><span>Informasi stok tidak dapat diedit dari halaman ini.</span></div>
-            </aside>
+        {{-- TOMBOL KEMBALI --}}
+        <div class="mb-4 max-w-[600px] mx-auto">
+            <a href="{{ route('barangs.index') }}" class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-on-surface-variant hover:text-primary transition-colors">
+                <span class="material-symbols-outlined text-[18px]">arrow_back</span>
+                <span>Kembali ke Daftar Barang</span>
+            </a>
         </div>
-    </form>
+
+        {{-- FORM CARD --}}
+        <div class="max-w-[600px] mx-auto bg-surface-container-lowest rounded-2xl shadow-[0_4px_20px_rgba(15,23,42,0.04)] border border-outline-variant/30 overflow-hidden relative">
+            <div class="h-1 bg-gradient-to-r from-[#E5B93C] via-[#FBBF24] to-[#E5B93C]"></div>
+
+            <div class="p-6 sm:p-7">
+                <div class="flex items-center justify-between pb-5 mb-5 border-b border-surface-container">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-[#E0F2FE] text-primary flex items-center justify-center shrink-0">
+                            <span class="material-symbols-outlined text-[22px]">edit_note</span>
+                        </div>
+                        <div>
+                            <h3 class="text-[17px] font-bold text-on-surface">Formulir Edit Master Barang</h3>
+                            <p class="text-[12px] text-on-surface-variant">Kode Barang: <span class="font-mono font-bold text-primary">{{ $barang->code }}</span></p>
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold {{ $barang->status ? 'bg-tertiary-fixed text-on-tertiary-fixed' : 'bg-surface-container-high text-on-surface-variant' }}">
+                        <span class="w-1.5 h-1.5 rounded-full {{ $barang->status ? 'bg-tertiary' : 'bg-on-surface-variant' }}"></span>
+                        {{ $barang->status ? 'Aktif' : 'Nonaktif' }}
+                    </span>
+                </div>
+
+                @if ($errors->any())
+                    <div class="mb-5 p-3.5 bg-error-container text-on-error-container rounded-xl text-xs flex items-center gap-2">
+                        <span class="material-symbols-outlined text-base text-error">error</span>
+                        <div>Terdapat kesalahan pada input form. Mohon periksa kembali data Anda.</div>
+                    </div>
+                @endif
+
+                <form action="{{ route('barangs.update', $barang->id) }}" method="POST" class="space-y-4">
+                    @csrf
+                    @method('PUT')
+
+                    {{-- KODE BARANG --}}
+                    <div>
+                        <label for="code" class="block text-[13px] font-bold text-on-surface mb-1.5">Kode Barang <span class="text-error">*</span></label>
+                        <input
+                            type="text"
+                            id="code"
+                            name="code"
+                            value="{{ old('code', $barang->code) }}"
+                            class="w-full px-3.5 py-2.5 rounded-xl border @error('code') border-error bg-error-container/20 @else border-outline-variant/60 bg-surface-container-lowest @enderror text-on-surface text-[13px] font-semibold tracking-wide focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all"
+                            required
+                        >
+                        @error('code')
+                            <p class="mt-1 text-[12px] font-semibold text-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- NAMA BARANG --}}
+                    <div>
+                        <label for="name" class="block text-[13px] font-bold text-on-surface mb-1.5">Nama Barang <span class="text-error">*</span></label>
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            value="{{ old('name', $barang->name) }}"
+                            class="w-full px-3.5 py-2.5 rounded-xl border @error('name') border-error @else border-outline-variant/60 @enderror bg-surface-container-lowest text-on-surface text-[13px] font-medium focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary/20 transition-all"
+                            required
+                        >
+                        @error('name')
+                            <p class="mt-1 text-[12px] font-semibold text-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- KATEGORI --}}
+                    <div>
+                        <label for="category_id" class="block text-[13px] font-bold text-on-surface mb-1.5">Kategori <span class="text-error">*</span></label>
+                        <div class="relative">
+                            <select
+                                id="category_id"
+                                name="category_id"
+                                class="w-full px-3.5 py-2.5 rounded-xl border @error('category_id') border-error @else border-outline-variant/60 @enderror bg-surface-container-lowest text-on-surface text-[13px] font-medium appearance-none focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary/20 transition-all pr-10 cursor-pointer"
+                                required
+                            >
+                                <option value="">-- Pilih Kategori --</option>
+                                @foreach ($categories as $category)
+                                    <option value="{{ $category->id }}" {{ old('category_id', $barang->category_id) == $category->id ? 'selected' : '' }}>{{ $category->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-on-surface-variant">
+                                <span class="material-symbols-outlined text-[20px]">expand_more</span>
+                            </div>
+                        </div>
+                        @error('category_id')
+                            <p class="mt-1 text-[12px] font-semibold text-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- SATUAN --}}
+                    <div>
+                        <label for="unit_id" class="block text-[13px] font-bold text-on-surface mb-1.5">Satuan <span class="text-error">*</span></label>
+                        <div class="relative">
+                            <select
+                                id="unit_id"
+                                name="unit_id"
+                                class="w-full px-3.5 py-2.5 rounded-xl border @error('unit_id') border-error @else border-outline-variant/60 @enderror bg-surface-container-lowest text-on-surface text-[13px] font-medium appearance-none focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary/20 transition-all pr-10 cursor-pointer"
+                                required
+                            >
+                                <option value="">-- Pilih Satuan --</option>
+                                @foreach ($units as $unit)
+                                    <option value="{{ $unit->id }}" {{ old('unit_id', $barang->unit_id) == $unit->id ? 'selected' : '' }}>{{ $unit->name }}</option>
+                                @endforeach
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-on-surface-variant">
+                                <span class="material-symbols-outlined text-[20px]">expand_more</span>
+                            </div>
+                        </div>
+                        @error('unit_id')
+                            <p class="mt-1 text-[12px] font-semibold text-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- STOK SAAT INI (DISABLED) --}}
+                    <div>
+                        <label class="block text-[13px] font-bold text-on-surface mb-1.5">Stok Saat Ini</label>
+                        <div class="w-full bg-surface-container-low border border-outline-variant/40 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-on-surface flex items-center justify-between">
+                            <span>{{ number_format($barang->stock) }} {{ $barang->unit->name ?? '' }}</span>
+                            <span class="text-[11px] font-semibold text-on-surface-variant">Hanya dapat diubah lewat transaksi</span>
+                        </div>
+                    </div>
+
+                    {{-- STOK MINIMUM --}}
+                    <div>
+                        <label for="minimum_stock" class="block text-[13px] font-bold text-on-surface mb-1.5">Stok Minimum <span class="text-error">*</span></label>
+                        <input
+                            type="number"
+                            id="minimum_stock"
+                            name="minimum_stock"
+                            value="{{ old('minimum_stock', $barang->minimum_stock) }}"
+                            min="0"
+                            class="w-full px-3.5 py-2.5 rounded-xl border @error('minimum_stock') border-error @else border-outline-variant/60 @enderror bg-surface-container-lowest text-on-surface text-[13px] font-semibold focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary/20 transition-all"
+                            required
+                        >
+                        @error('minimum_stock')
+                            <p class="mt-1 text-[12px] font-semibold text-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- LOKASI --}}
+                    <div>
+                        <label for="location" class="block text-[13px] font-bold text-on-surface mb-1.5">Lokasi</label>
+                        <div class="relative">
+                            <span class="material-symbols-outlined absolute left-3 top-2.5 text-[18px] text-on-surface-variant pointer-events-none">warehouse</span>
+                            <input
+                                type="text"
+                                id="location"
+                                name="location"
+                                value="{{ old('location', $barang->location) }}"
+                                class="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-outline-variant/60 bg-surface-container-lowest text-on-surface text-[13px] font-medium focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary/20 transition-all"
+                                placeholder="Contoh: Gudang A, Rak 1"
+                            >
+                        </div>
+                        @error('location')
+                            <p class="mt-1 text-[12px] font-semibold text-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- DESKRIPSI --}}
+                    <div>
+                        <label for="description" class="block text-[13px] font-bold text-on-surface mb-1.5">Deskripsi</label>
+                        <textarea
+                            id="description"
+                            name="description"
+                            rows="3"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-outline-variant/60 bg-surface-container-lowest text-on-surface text-[13px] font-medium focus:outline-none focus:border-primary-container focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+                            placeholder="Spesifikasi atau peruntukan operasional..."
+                        >{{ old('description', $barang->description) }}</textarea>
+                        @error('description')
+                            <p class="mt-1 text-[12px] font-semibold text-error">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    {{-- ACTIONS --}}
+                    <div class="pt-4 mt-5 border-t border-surface-container flex items-center justify-end gap-3">
+                        <a href="{{ route('barangs.index') }}" class="inline-flex items-center justify-center min-w-[90px] px-5 py-2.5 rounded-full border border-outline-variant/60 text-on-surface hover:bg-surface-container font-semibold text-[13px] transition-colors">Batal</a>
+                        <button type="submit" class="px-6 py-2.5 rounded-full bg-primary-container hover:bg-primary text-white font-bold text-[13px] flex items-center gap-2 shadow-sm shadow-primary-container/30 transition-all active:scale-[0.98]">
+                            <span class="material-symbols-outlined text-[18px]">check</span>
+                            <span>Simpan Perubahan</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {{-- CORPORATE FOOTER --}}
+        <footer class="mt-8 text-center text-[12px] font-medium text-on-surface-variant">
+            © 2026 Sistem Manajemen Persediaan &amp; ATK • PT Pupuk Sriwidjaja Palembang • Member of Pupuk Indonesia
+        </footer>
+    </div>
 </div>
 @endsection

@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Barang;
-use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Unit;
+use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
 
 class BarangController extends Controller
@@ -54,31 +54,59 @@ class BarangController extends Controller
             ->addIndexColumn()
             ->addColumn('stock_status', function ($row) {
                 if ($row->stock <= 0) {
-                    return 'Habis';
+                    return '<div class="flex justify-center items-center"><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full font-label-sm text-label-sm bg-error-container text-on-error-container font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-error"></span>Habis</span></div>';
                 }
 
                 if ($row->stock <= $row->minimum_stock) {
-                    return 'Menipis';
+                    return '<div class="flex justify-center items-center"><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full font-label-sm text-label-sm bg-amber-100 text-amber-800 font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Menipis</span></div>';
                 }
 
-                return 'Aman';
+                return '<div class="flex justify-center items-center"><span class="inline-flex items-center gap-1 px-3 py-1 rounded-full font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed font-semibold"><span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>Aman</span></div>';
             })
-            ->addColumn('active_status', fn ($row) => $row->status ? 'Aktif' : 'Nonaktif')
+            ->addColumn('active_status', function ($row) {
+                return $row->status
+                    ? '<div class="flex justify-center items-center"><span class="inline-flex items-center px-2.5 py-1 rounded-full font-label-sm text-label-sm bg-tertiary-fixed text-on-tertiary-fixed font-semibold">Aktif</span></div>'
+                    : '<div class="flex justify-center items-center"><span class="inline-flex items-center px-2.5 py-1 rounded-full font-label-sm text-label-sm bg-surface-container-high text-on-surface-variant font-semibold">Nonaktif</span></div>';
+            })
             ->addColumn('action', function ($row) {
-                $detail = '<a href="' . route('barangs.show', $row->id) . '">Detail</a>';
-                $edit = '<a href="' . route('barangs.edit', $row->id) . '">Edit</a>';
-                $label = $row->status ? 'Nonaktifkan' : 'Aktifkan';
-                $toggle = '<form action="' . route('barangs.toggle-status', $row->id) . '" method="POST"'
-                    . ' data-confirm-title="' . $label . ' barang ini?"'
-                    . ' data-confirm-message="' . ($row->status
-                        ? 'Barang akan disembunyikan dari transaksi, tetapi data dan riwayatnya tetap tersimpan.'
-                        : 'Barang akan tersedia kembali untuk transaksi.') . '"'
-                    . ' data-confirm-action="' . $label . '"'
-                    . ' data-confirm-icon="' . ($row->status ? 'block' : 'power_settings_new') . '">'
-                    . csrf_field() . method_field('PATCH')
-                    . '<button type="submit">' . $label . '</button></form>';
+                $detail = '<a href="'.route('barangs.show', $row->id).'" class="w-8 h-8 rounded-full bg-primary-fixed/50 hover:bg-primary-fixed text-on-primary-fixed-variant flex items-center justify-center transition-colors" title="Detail Barang"><span class="material-symbols-outlined text-[17px]">visibility</span></a>';
 
-                return $detail . $edit . $toggle;
+                $edit = '';
+                if (auth()->user()?->can('barang.update') ?? true) {
+                    $edit = '<a href="'.route('barangs.edit', $row->id).'" class="w-8 h-8 rounded-full bg-surface-container-high hover:bg-surface-variant text-on-surface flex items-center justify-center transition-colors" title="Edit Barang"><span class="material-symbols-outlined text-[17px]">edit</span></a>';
+                }
+
+                $label = $row->status ? 'Nonaktifkan' : 'Aktifkan';
+                $toggleIcon = $row->status ? 'block' : 'power_settings_new';
+                $toggleBg = $row->status ? 'bg-amber-100 hover:bg-amber-200 text-amber-800' : 'bg-tertiary-fixed/60 hover:bg-tertiary-fixed text-on-tertiary-fixed';
+
+                $toggle = '';
+                if (auth()->user()?->can('barang.update') ?? true) {
+                    $toggle = '<form action="'.route('barangs.toggle-status', $row->id).'" method="POST" class="inline-block m-0"'
+                        .' data-confirm-title="'.$label.' barang ini?"'
+                        .' data-confirm-message="'.($row->status
+                            ? 'Barang akan disembunyikan dari transaksi, tetapi data dan riwayatnya tetap tersimpan.'
+                            : 'Barang akan tersedia kembali untuk transaksi.').'"'
+                        .' data-confirm-action="'.$label.'"'
+                        .' data-confirm-icon="'.$toggleIcon.'"'
+                        .' data-confirm-tone="warning">'
+                        .csrf_field().method_field('PATCH')
+                        .'<button type="submit" class="w-8 h-8 rounded-full '.$toggleBg.' flex items-center justify-center transition-colors" title="'.$label.'"><span class="material-symbols-outlined text-[17px]">'.$toggleIcon.'</span></button></form>';
+                }
+
+                $delete = '';
+                if (auth()->user()?->can('barang.delete') ?? true) {
+                    $delete = '<form action="'.route('barangs.destroy', $row->id).'" method="POST" class="inline-block m-0"'
+                        .' data-confirm-title="Hapus barang ini?"'
+                        .' data-confirm-message="Barang akan dinonaktifkan dari sistem persediaan."'
+                        .' data-confirm-action="Hapus"'
+                        .' data-confirm-icon="delete"'
+                        .' data-confirm-tone="danger">'
+                        .csrf_field().method_field('DELETE')
+                        .'<button type="submit" class="w-8 h-8 rounded-full bg-error-container hover:bg-error hover:text-on-error text-on-error-container flex items-center justify-center transition-colors" title="Hapus"><span class="material-symbols-outlined text-[17px]">delete</span></button></form>';
+                }
+
+                return '<div class="flex items-center justify-center gap-1.5">'.$detail.$edit.$toggle.$delete.'</div>';
             })
             ->filterColumn('stock_status', function ($query, $keyword) {
                 $keyword = mb_strtolower($keyword);
@@ -109,7 +137,7 @@ class BarangController extends Controller
             ->filterColumn('unit.name', fn ($query, $keyword) => $query->where('units.name', 'like', "%{$keyword}%"))
             ->orderColumn('category.name', 'categories.name $1')
             ->orderColumn('unit.name', 'units.name $1')
-            ->rawColumns(['action'])
+            ->rawColumns(['stock_status', 'active_status', 'action'])
             ->make(true);
     }
 
@@ -124,13 +152,13 @@ class BarangController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'code'          => 'required|unique:barangs,code',
-            'name'          => 'required',
-            'category_id'   => 'required|exists:categories,id',
-            'unit_id'       => 'required|exists:units,id',
+            'code' => 'required|unique:barangs,code',
+            'name' => 'required',
+            'category_id' => 'required|exists:categories,id',
+            'unit_id' => 'required|exists:units,id',
             'minimum_stock' => 'required|integer|min:0',
-            'location'      => 'nullable',
-            'description'   => 'nullable',
+            'location' => 'nullable',
+            'description' => 'nullable',
         ]);
 
         $validated['stock'] = 0;
@@ -160,13 +188,13 @@ class BarangController extends Controller
     public function update(Request $request, Barang $barang)
     {
         $validated = $request->validate([
-            'code'          => 'required|unique:barangs,code,' . $barang->id,
-            'name'          => 'required',
-            'category_id'   => 'required|exists:categories,id',
-            'unit_id'       => 'required|exists:units,id',
+            'code' => 'required|unique:barangs,code,'.$barang->id,
+            'name' => 'required',
+            'category_id' => 'required|exists:categories,id',
+            'unit_id' => 'required|exists:units,id',
             'minimum_stock' => 'required|integer|min:0',
-            'location'      => 'nullable',
-            'description'   => 'nullable',
+            'location' => 'nullable',
+            'description' => 'nullable',
         ]);
 
         $barang->update($validated);
@@ -210,7 +238,7 @@ class BarangController extends Controller
         ]);
 
         try {
-            $import = new BarangsImport();
+            $import = new BarangsImport;
 
             Excel::import($import, $request->file('file_import'));
 
@@ -219,10 +247,10 @@ class BarangController extends Controller
 
             if ($jumlahError > 0) {
                 $pesan = $jumlahBerhasil
-                    . ' data berhasil diimpor. '
-                    . $jumlahError
-                    . ' baris dilewati. '
-                    . implode(' ', array_slice($import->errors, 0, 5));
+                    .' data berhasil diimpor. '
+                    .$jumlahError
+                    .' baris dilewati. '
+                    .implode(' ', array_slice($import->errors, 0, 5));
 
                 return redirect()->route('barangs.index')
                     ->with('error', $pesan);
@@ -230,7 +258,7 @@ class BarangController extends Controller
 
             return redirect()->route('barangs.index')
                 ->with('success', $jumlahBerhasil
-                    . ' data barang berhasil diimpor.');
+                    .' data barang berhasil diimpor.');
 
         } catch (\Throwable $e) {
             report($e);
