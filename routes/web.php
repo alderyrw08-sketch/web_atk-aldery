@@ -34,10 +34,12 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('barangs', [BarangController::class, 'store'])->name('barangs.store')->middleware('permission:barang.create');
     Route::get('barangs/{barang}', [BarangController::class, 'show'])->name('barangs.show')->middleware('permission:barang.view');
     Route::get('barangs/{barang}/edit', [BarangController::class, 'edit'])->name('barangs.edit')->middleware('permission:barang.update');
+    Route::get('barangs/data', [BarangController::class, 'data'])->name('barangs.data');
     Route::put('barangs/{barang}', [BarangController::class, 'update'])->name('barangs.update')->middleware('permission:barang.update');
     Route::patch('barangs/{barang}/activate', [BarangController::class, 'activate'])->name('barangs.activate')->middleware('permission:barang.update');
+    Route::patch('barangs/{barang}/toggle-status', [BarangController::class, 'toggleStatus'])->name('barangs.toggle-status');
     Route::delete('barangs/{barang}', [BarangController::class, 'destroy'])->name('barangs.destroy')->middleware('permission:barang.delete');
-
+    Route::resource('barangs', BarangController::class);
     // Kategori
     Route::get('categories', [CategoryController::class, 'index'])->name('categories.index')->middleware('permission:kategori.view');
     Route::get('categories/data', [CategoryController::class, 'data'])->name('categories.data')->middleware('permission:kategori.view');

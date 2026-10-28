@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Barang;
 use App\Models\StockIn;
+use App\Models\StockInDetail;
 use App\Models\Supplier;
 use App\Services\StockService;
 use Illuminate\Http\Request;
@@ -18,13 +19,30 @@ class StockInController extends Controller
 
     public function index()
     {
-        return view('stock-in.index');
+        $totalTransactions = StockIn::count();
+        $activeTransactions = StockIn::where('status', 'Active')->count();
+        $cancelledTransactions = StockIn::where('status', 'Cancelled')->count();
+        $totalItemsReceived = StockInDetail::whereHas('stockIn', fn ($query) => $query->where('status', 'Active'))
+            ->sum('quantity');
+
+        return view('stock-in.index', compact(
+            'totalTransactions',
+            'activeTransactions',
+            'cancelledTransactions',
+            'totalItemsReceived'
+        ));
     }
 
-    public function data()
+    public function data(Request $request)
     {
         $query = StockIn::with(['supplier', 'user'])->select('stock_ins.*')
             ->orderByDesc('transaction_date')->orderByDesc('id');
+
+        if ($request->input('status') === 'active') {
+            $query->where('status', 'Active');
+        } elseif ($request->input('status') === 'cancelled') {
+            $query->where('status', 'Cancelled');
+        }
 
         return DataTables::eloquent($query)
             ->addIndexColumn()
@@ -33,12 +51,12 @@ class StockInController extends Controller
             ->addColumn('user_name', fn ($s) => $s->user->name ?? '-')
             ->editColumn('document_number', fn ($s) => $s->document_number ?: '-')
             ->addColumn('status_badge', fn ($s) => $s->status === 'Active'
-                ? '<span class="badge bg-success">Active</span>'
-                : '<span class="badge bg-secondary">Cancelled</span>')
+                ? '<span class="inv-badge">Aktif</span>'
+                : '<span class="inv-badge cancelled">Dibatalkan</span>')
             ->addColumn('action', function ($s) {
                 $html = '<a href="' . route('stock-in.show', $s->id) . '" class="btn btn-sm btn-info">Detail</a> ';
                 if ($s->status === 'Active' && auth()->user()->can('barang-masuk.delete')) {
-                    $html .= '<form action="' . route('stock-in.cancel', $s->id) . '" method="POST" class="d-inline" onsubmit="return confirm(\'Batalkan transaksi ini? Stok akan dikembalikan.\')">'
+                    $html .= '<form action="' . route('stock-in.cancel', $s->id) . '" method="POST" class="d-inline" data-confirm-title="Batalkan transaksi ini?" data-confirm-message="Stok pada transaksi ini akan dikembalikan ke persediaan." data-confirm-action="Batalkan" data-confirm-icon="cancel" data-confirm-tone="danger">'
                         . csrf_field() . method_field('PATCH')
                         . '<button class="btn btn-sm btn-danger">Batalkan</button></form>';
                 }

@@ -6,6 +6,7 @@ use App\Models\Barang;
 use Illuminate\Http\Request;
 use App\Models\Category;
 use App\Models\Unit;
+use Yajra\DataTables\Facades\DataTables;
 
 class BarangController extends Controller
 {
@@ -18,67 +19,97 @@ class BarangController extends Controller
 
     public function data(Request $request)
     {
-        $query = Barang::with(['category', 'unit'])
-            ->select('barangs.*');
+        $query = Barang::query()
+            ->leftJoin('categories', 'categories.id', '=', 'barangs.category_id')
+            ->leftJoin('units', 'units.id', '=', 'barangs.unit_id')
+            ->select([
+                'barangs.id',
+                'barangs.code',
+                'barangs.name',
+                'barangs.category_id',
+                'barangs.unit_id',
+                'barangs.stock',
+                'barangs.minimum_stock',
+                'barangs.location',
+                'barangs.status',
+                'categories.name as category_name',
+                'units.name as unit_name',
+            ]);
 
         if ($request->filled('category_id')) {
-            $query->where('category_id', $request->category_id);
+            $query->where('barangs.category_id', $request->category_id);
         }
 
-        if ($request->status_stok === 'habis') {
-            $query->where('stock', 0);
-        } elseif ($request->status_stok === 'menipis') {
-            $query->where('stock', '>', 0)
-                ->whereColumn('stock', '<=', 'minimum_stock');
-        } elseif ($request->status_stok === 'aman') {
-            $query->whereColumn('stock', '>', 'minimum_stock');
+        if ($request->filled('status_stok')) {
+            match ($request->status_stok) {
+                'habis' => $query->where('barangs.stock', '<=', 0),
+                'menipis' => $query->where('barangs.stock', '>', 0)
+                    ->whereColumn('barangs.stock', '<=', 'barangs.minimum_stock'),
+                'aman' => $query->whereColumn('barangs.stock', '>', 'barangs.minimum_stock'),
+                default => null,
+            };
         }
 
         return DataTables::eloquent($query)
             ->addIndexColumn()
-            ->addColumn('category_name', fn ($b) => $b->category->name ?? '-')
-            ->addColumn('unit_name', fn ($b) => $b->unit->name ?? '-')
-            ->addColumn('stock_status', function ($b) {
-                if ($b->stock == 0) {
-                    return '<span class="badge bg-danger">Habis</span>';
+            ->addColumn('stock_status', function ($row) {
+                if ($row->stock <= 0) {
+                    return 'Habis';
                 }
 
-                if ($b->stock <= $b->minimum_stock) {
-                    return '<span class="badge bg-warning text-dark">Menipis</span>';
+                if ($row->stock <= $row->minimum_stock) {
+                    return 'Menipis';
                 }
 
-                return '<span class="badge bg-success">Aman</span>';
+                return 'Aman';
             })
-            ->addColumn('active_status', fn ($b) => $b->status
-                ? '<span class="badge bg-success">Aktif</span>'
-                : '<span class="badge bg-secondary">Nonaktif</span>')
-            ->addColumn('action', function ($b) {
-                $html = '<a href="' . route('barangs.show', $b->id)
-                    . '" class="btn btn-sm btn-info">Detail</a> ';
+            ->addColumn('active_status', fn ($row) => $row->status ? 'Aktif' : 'Nonaktif')
+            ->addColumn('action', function ($row) {
+                $detail = '<a href="' . route('barangs.show', $row->id) . '">Detail</a>';
+                $edit = '<a href="' . route('barangs.edit', $row->id) . '">Edit</a>';
+                $label = $row->status ? 'Nonaktifkan' : 'Aktifkan';
+                $toggle = '<form action="' . route('barangs.toggle-status', $row->id) . '" method="POST"'
+                    . ' data-confirm-title="' . $label . ' barang ini?"'
+                    . ' data-confirm-message="' . ($row->status
+                        ? 'Barang akan disembunyikan dari transaksi, tetapi data dan riwayatnya tetap tersimpan.'
+                        : 'Barang akan tersedia kembali untuk transaksi.') . '"'
+                    . ' data-confirm-action="' . $label . '"'
+                    . ' data-confirm-icon="' . ($row->status ? 'block' : 'power_settings_new') . '">'
+                    . csrf_field() . method_field('PATCH')
+                    . '<button type="submit">' . $label . '</button></form>';
 
-                if (auth()->user()->can('barang.update')) {
-                    $html .= '<a href="' . route('barangs.edit', $b->id)
-                        . '" class="btn btn-sm btn-warning">Edit</a> ';
-                }
-
-                if ($b->status && auth()->user()->can('barang.delete')) {
-                    $html .= '<form action="' . route('barangs.destroy', $b->id)
-                        . '" method="POST" class="d-inline" '
-                        . 'onsubmit="return confirm(\'Nonaktifkan barang ini?\')">'
-                        . csrf_field() . method_field('DELETE')
-                        . '<button class="btn btn-sm btn-danger">'
-                        . 'Nonaktifkan</button></form>';
-                } elseif (!$b->status && auth()->user()->can('barang.update')) {
-                    $html .= '<form action="' . route('barangs.activate', $b->id)
-                        . '" method="POST" class="d-inline">'
-                        . csrf_field() . method_field('PATCH')
-                        . '<button class="btn btn-sm btn-success">'
-                        . 'Aktifkan</button></form>';
-                }
-
-                return $html;
+                return $detail . $edit . $toggle;
             })
-            ->rawColumns(['stock_status', 'active_status', 'action'])
+            ->filterColumn('stock_status', function ($query, $keyword) {
+                $keyword = mb_strtolower($keyword);
+
+                if (str_contains($keyword, 'habis')) {
+                    $query->where('barangs.stock', '<=', 0);
+                } elseif (str_contains($keyword, 'menipis')) {
+                    $query->where('barangs.stock', '>', 0)
+                        ->whereColumn('barangs.stock', '<=', 'barangs.minimum_stock');
+                } elseif (str_contains($keyword, 'aman')) {
+                    $query->whereColumn('barangs.stock', '>', 'barangs.minimum_stock');
+                } else {
+                    $query->whereRaw('1 = 0');
+                }
+            })
+            ->filterColumn('status', function ($query, $keyword) {
+                $keyword = mb_strtolower($keyword);
+
+                if (str_contains($keyword, 'nonaktif')) {
+                    $query->where('barangs.status', false);
+                } elseif (str_contains($keyword, 'aktif')) {
+                    $query->where('barangs.status', true);
+                } else {
+                    $query->whereRaw('1 = 0');
+                }
+            })
+            ->filterColumn('category.name', fn ($query, $keyword) => $query->where('categories.name', 'like', "%{$keyword}%"))
+            ->filterColumn('unit.name', fn ($query, $keyword) => $query->where('units.name', 'like', "%{$keyword}%"))
+            ->orderColumn('category.name', 'categories.name $1')
+            ->orderColumn('unit.name', 'units.name $1')
+            ->rawColumns(['action'])
             ->make(true);
     }
 
@@ -158,6 +189,14 @@ class BarangController extends Controller
 
         return redirect()->route('barangs.index')
             ->with('success', 'Barang berhasil diaktifkan kembali');
+    }
+
+    public function toggleStatus(Barang $barang)
+    {
+        $barang->update(['status' => ! $barang->status]);
+
+        return redirect()->route('barangs.index')
+            ->with('success', 'Status barang berhasil diperbarui');
     }
 
     public function import(Request $request)

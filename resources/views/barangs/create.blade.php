@@ -1,5 +1,8 @@
 @extends('layouts.app')
 
+@section('title', 'Tambah Barang | Sistem ATK')
+@section('page-title', 'Master Data Barang')
+
 @section('content')
 
 <style>
@@ -146,7 +149,7 @@
 
     .atk-create-mode {
         width: 100%;
-        max-width: 896px;
+        max-width: 960px;
         margin: 0 auto 24px;
         padding: 12px 20px;
         display: flex;
@@ -231,7 +234,7 @@
         align-items: center;
         gap: 6px;
         width: 100%;
-        max-width: 640px;
+        max-width: 960px;
         margin: 0 auto 16px;
         color: #94A3B8;
         text-decoration: none;
@@ -252,7 +255,7 @@
     .atk-create-card {
         position: relative;
         width: 100%;
-        max-width: 640px;
+        max-width: 960px;
         margin: 0 auto;
         overflow: hidden;
         background: #fff;
@@ -601,45 +604,16 @@
     }
 </style>
 
-{{-- HEADER --}}
-<div class="atk-custom-header">
-    <div>
-        <h1 class="atk-header-title">Tambah Barang</h1>
+<div class="atk-create-page inventory-page">
 
-        <div class="atk-breadcrumb">
-            <span>Master Data</span>
-            <span>›</span>
-            <span>Barang</span>
-            <span>›</span>
-            <strong>Tambah Barang</strong>
+    <div class="inv-page-head">
+        <div class="inv-heading">
+            <div class="inv-breadcrumb"><span>Persediaan &amp; Logistik</span><span class="inv-breadcrumb-dot"></span><span class="inv-breadcrumb-current">Master Data</span></div>
+            <h1 class="inv-title">Tambah Barang</h1>
+            <p class="inv-subtitle">Tambahkan item baru ke master persediaan</p>
         </div>
+        <a href="{{ route('barangs.index') }}" class="inv-button"><span class="material-symbols-outlined">arrow_back</span>Kembali</a>
     </div>
-
-    <div class="atk-header-right">
-        <div class="atk-header-date">
-            <span class="material-symbols-outlined">calendar_today</span>
-            <span>{{ now()->translatedFormat('l, d F Y') }}</span>
-        </div>
-
-        <button type="button" class="atk-header-notification"
-                aria-label="Notifikasi">
-            <span class="material-symbols-outlined">notifications</span>
-        </button>
-
-        <div class="atk-header-profile">
-            <div class="atk-header-avatar">
-                <span class="material-symbols-outlined">person</span>
-            </div>
-
-            <div class="atk-header-profile-text">
-                <strong>Administrator</strong>
-                <small>Admin</small>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="atk-create-page">
 
     {{-- MODE TAMPILAN --}}
     <div class="atk-create-mode">

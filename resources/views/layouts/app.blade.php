@@ -333,6 +333,7 @@
         }
     </style>
 
+    @include('layouts.inventory-styles')
     @stack('styles')
 </head>
 
@@ -430,6 +431,22 @@
 
 @endauth
 
+<div class="modal fade inventory-confirm-modal" id="inventory-confirm-modal" tabindex="-1" aria-labelledby="inventory-confirm-title" aria-describedby="inventory-confirm-message" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-body">
+                <span class="inventory-confirm-icon"><span class="material-symbols-outlined" id="inventory-confirm-icon">warning</span></span>
+                <h2 class="inventory-confirm-title" id="inventory-confirm-title">Konfirmasi tindakan</h2>
+                <p class="inventory-confirm-message" id="inventory-confirm-message"></p>
+            </div>
+            <div class="inventory-confirm-actions">
+                <button type="button" class="inv-button inv-button-outline" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="inv-button confirm-submit" id="inventory-confirm-submit">Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
@@ -472,6 +489,38 @@ document.addEventListener('DOMContentLoaded', function () {
         if (window.innerWidth > 900) {
             closeSidebar();
         }
+    });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const modalElement = document.getElementById('inventory-confirm-modal');
+    const confirmModal = new bootstrap.Modal(modalElement);
+    let pendingForm = null;
+
+    document.addEventListener('submit', function (event) {
+        const form = event.target.closest('form[data-confirm-title]');
+        if (!form) return;
+
+        event.preventDefault();
+        pendingForm = form;
+        modalElement.classList.toggle('is-danger', form.dataset.confirmTone === 'danger');
+        document.getElementById('inventory-confirm-title').textContent = form.dataset.confirmTitle;
+        document.getElementById('inventory-confirm-message').textContent = form.dataset.confirmMessage;
+        document.getElementById('inventory-confirm-submit').textContent = form.dataset.confirmAction || 'Lanjutkan';
+        document.getElementById('inventory-confirm-icon').textContent = form.dataset.confirmIcon || 'warning';
+        confirmModal.show();
+    });
+
+    document.getElementById('inventory-confirm-submit').addEventListener('click', function () {
+        if (pendingForm) {
+            HTMLFormElement.prototype.submit.call(pendingForm);
+        }
+    });
+
+    modalElement.addEventListener('hidden.bs.modal', function () {
+        pendingForm = null;
     });
 });
 </script>
